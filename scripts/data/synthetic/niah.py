@@ -25,6 +25,7 @@ python niah.py \
     --num_samples=10 \
     --template="Some special magic {type_needle_v} are hidden within the following text. Make sure to memorize it. I will quiz you about the {type_needle_v} afterwards.\n{context}\nWhat are all the special magic {type_needle_v} for {query} mentioned in the provided text? The special magic {type_needle_v} for {query} mentioned in the provided text are"
 """
+
 import os
 import re
 import json
@@ -45,16 +46,16 @@ import logging
 logging.basicConfig(level=logging.INFO, force=True)
 logger = logging.getLogger(__name__)
 
-
 from constants import TASKS
 
 parser = argparse.ArgumentParser()
+
 # Basic Configurations
 parser.add_argument("--save_dir", type=Path, required=True, help='dataset folder to save dataset')
 parser.add_argument("--save_name", type=str, required=True, help='name of the save dataset jsonl file')
 parser.add_argument("--subset", type=str, default='validation', help='Options: validation or test')
 parser.add_argument("--tokenizer_path", type=str, required=True, help='path to the tokenizer model')
-parser.add_argument("--tokenizer_type",  type=str, default='nemo', help='[Options] nemo, hf, openai.')
+parser.add_argument("--tokenizer_type",  type=str, required=True, help='[Options] nemo, hf, openai.')
 parser.add_argument("--max_seq_length", type=int, required=True, help='max sequence length including all input tokens and generated tokens.')
 parser.add_argument("--tokens_to_generate", type=int, required=True, help='expected generated token amount.')
 parser.add_argument("--num_samples", type=int, required=True, help='number of samples to generate')
@@ -72,6 +73,7 @@ parser.add_argument("--type_needle_v", type=str, default='numbers', help='[Optio
 parser.add_argument("--model_template_token", type=int, default=0, help='used for nemo skills, minus num of model template token')
 
 args = parser.parse_args()
+
 random.seed(args.random_seed)
 np.random.seed(args.random_seed)
 args.num_needle_k = max(args.num_needle_k, args.num_needle_q)
@@ -92,7 +94,6 @@ elif args.type_haystack == 'needle':
 else:
     raise NotImplementedError(f'{args.type_haystack} is not implemented.')
 
-
 # Words
 nouns = wonderwords.random_word._get_words_from_text_file("nounlist.txt")
 adjs = wonderwords.random_word._get_words_from_text_file("adjectivelist.txt")
@@ -100,9 +101,9 @@ adjs = wonderwords.random_word._get_words_from_text_file("adjectivelist.txt")
 words = [f"{adj}-{noun}" for adj in adjs for noun in nouns]
 words = sorted(list(set(words)))
 
-
 # Positions
 DEPTHS = list(np.round(np.linspace(0, 100, num=40, endpoint=True)).astype(int))
+
 
 
 def generate_random_number(num_digits=7):
@@ -110,12 +111,18 @@ def generate_random_number(num_digits=7):
     upper_bound = 10**num_digits - 1
     return str(random.randint(lower_bound, upper_bound))
 
+
+
 def generate_random_word():
     word = random.choice(words)
     return word
 
+
+
 def generate_random_uuid():
     return str(uuid.UUID(int=random.getrandbits(128), version=4))
+
+
 
 def generate_random(type_needle: str):
     if type_needle == 'numbers':
@@ -126,6 +133,8 @@ def generate_random(type_needle: str):
         return generate_random_uuid()
     else:
         raise NotImplementedError(f'{args.type_needle} is not implemented.')
+
+
 
 def generate_input_output(num_haystack):
     keys, values, needles = [], [], []
@@ -175,12 +184,10 @@ def generate_input_output(num_haystack):
                 value=generate_random(args.type_needle_v),
             ) for _ in range(num_haystack)]
 
-
         indexes = sorted(random.sample(range(num_haystack), len(needles)), reverse=True)
         for index, element in zip(indexes, needles):
             sentences.insert(index, element)
         context = "\n".join(sentences)
-
 
     ## Query and Answer
     indices = random.sample(range(args.num_needle_k), args.num_needle_q)
@@ -202,8 +209,8 @@ def generate_input_output(num_haystack):
         context=context,
         query=query,
     )
-
     return input_text, answers
+
 
 
 def generate_samples(num_samples: int, max_seq_length: int, save_dir: str, incremental: int = 500):
@@ -257,12 +264,10 @@ def generate_samples(num_samples: int, max_seq_length: int, save_dir: str, incre
     num_haystack = optimal_num_haystack if optimal_num_haystack is not None else incremental
     logger.info(f'Final optimal haystack size (number of haystack): {num_haystack}')
 
-
-
     # Generate samples
     for index in tqdm(range(num_samples)):
         used_haystack = num_haystack
-        while(True):
+        while (True):
             try:
                 input_text, answer  = generate_input_output(used_haystack)
                 length = len(TOKENIZER.text_to_tokens(input_text)) + tokens_to_generate
@@ -294,6 +299,7 @@ def generate_samples(num_samples: int, max_seq_length: int, save_dir: str, incre
     return write_jsons
 
 
+
 def main():
     save_file = args.save_dir / f'{args.save_name}' / f'{args.subset}.jsonl'
     save_file.parent.mkdir(parents=True, exist_ok=True)
@@ -304,6 +310,8 @@ def main():
     )
 
     write_manifest(save_file, write_jsons)
+
+
 
 if __name__ == "__main__":
     main()

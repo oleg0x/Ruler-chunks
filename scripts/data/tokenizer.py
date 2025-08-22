@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 import os
 from typing import List
 from tenacity import (
@@ -21,6 +20,7 @@ from tenacity import (
     wait_fixed,
     wait_random,
 ) 
+
 
 
 def select_tokenizer(tokenizer_type, tokenizer_path):
@@ -36,6 +36,7 @@ def select_tokenizer(tokenizer_type, tokenizer_path):
         return GeminiTokenizer(model_path=tokenizer_path)
     else:
         raise ValueError(f"Unknown tokenizer_type {tokenizer_type}")
+
 
 
 class NeMoSentencePieceTokenizer:
@@ -54,6 +55,8 @@ class NeMoSentencePieceTokenizer:
         text = self.tokenizer.tokens_to_text(tokens)
         return text
 
+
+
 class NeMoTikTokenTokenizer:
     """
     Tokenizer from NeMo SentencePieceTokenizer
@@ -69,6 +72,7 @@ class NeMoTikTokenTokenizer:
     def tokens_to_text(self, tokens: List[int]) -> str:
         text = self.tokenizer.tokens_to_text(tokens)
         return text
+
 
 
 class HFTokenizer:
@@ -88,6 +92,7 @@ class HFTokenizer:
         return text
 
 
+
 class OpenAITokenizer:
     """
     Tokenizer from tiktoken
@@ -103,6 +108,7 @@ class OpenAITokenizer:
     def tokens_to_text(self, tokens: List[int]) -> str:
         text = self.tokenizer.decode(tokens)
         return text
+
 
 
 class GeminiTokenizer:

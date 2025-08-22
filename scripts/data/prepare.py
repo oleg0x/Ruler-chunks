@@ -30,6 +30,7 @@ python prepare.py \
     --model_template_type base \
     --num_samples 10 \
 """
+
 import os
 import argparse
 import importlib
@@ -39,6 +40,7 @@ import yaml
 from pathlib import Path
 from template import Templates
 import nltk
+
 try:
     nltk.data.find('tokenizers/punkt')
     # nltk.data.find('tokenizers/punkt_tab')
@@ -47,22 +49,23 @@ except LookupError:
     nltk.download('punkt_tab')
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--save_dir", type=Path, required=True, help='dataset folder to save dataset')
-parser.add_argument("--benchmark", type=str, default='synthetic', help='Options: [synthetic]')
-parser.add_argument("--task", type=str, required=True, help='tasks in benchmark')
-parser.add_argument("--subset", type=str, default='validation', help='Options: validation or test')
-parser.add_argument("--tokenizer_path", type=str, required=True, help='path to the tokenizer model')
-parser.add_argument("--tokenizer_type",  type=str, default='nemo', help='[Options] nemo, hf, openai.')
-parser.add_argument("--max_seq_length", type=int, required=True, help='max sequence length including all input tokens and generated tokens.')
-parser.add_argument("--num_samples", type=int, default=500, help='maximum number of samples we want to test')
+parser.add_argument("--save_dir", type=Path, required=True, help='Directory to save dataset')
+parser.add_argument("--benchmark", type=str, default='synthetic', help='Options: synthetic')
+parser.add_argument("--task", type=str, required=True, help='Tasks in benchmark')
+parser.add_argument("--subset", type=str, default='validation', help='Options: validation, test')
+parser.add_argument("--tokenizer_path", type=str, required=True, help='Path to the tokenizer model')
+parser.add_argument("--tokenizer_type", type=str, required=True, help='Options: nemo, hf, openai.')
+parser.add_argument("--max_seq_length", type=int, required=True, help='Max sequence length including all input tokens and generated tokens.')
+parser.add_argument("--num_samples", type=int, required=True, help='Max number of samples we want to test')
 parser.add_argument("--random_seed", type=int, default=42)
 parser.add_argument("--model_template_type", type=str, default='base', help='Options in `template.py`')
 parser.add_argument("--remove_newline_tab", action='store_true', help='remove `\n` and `\t` in all strings.')
-parser.add_argument("--chunk_idx", type=int, default=0, help='index of current split chunk')
-parser.add_argument("--chunk_amount", type=int, default=1, help='size of split chunk')
+parser.add_argument("--chunk_idx", type=int, default=0, help='Index of current split chunk')
+parser.add_argument("--chunk_amount", type=int, default=1, help='Size of split chunk')
 parser.add_argument("--prepare_for_ns", action='store_true')
-
 args = parser.parse_args()
+
+
 
 def main():
     start_time = time.time()
@@ -106,7 +109,6 @@ def main():
     pre_samples = sum(chunks[:args.chunk_idx])
     
     random_seed = args.random_seed + args.chunk_idx
-
     
     save_file = args.save_dir / args.task / f"{args.subset}.jsonl"
     file_exists = False
@@ -114,8 +116,6 @@ def main():
         with open(save_file, "r") as f:
             data = f.readlines()
         if len(data) == args.num_samples: file_exists = True
-
-
 
     if not file_exists:
         try:
@@ -160,6 +160,8 @@ def main():
         print(f"Used time: {round((time.time() - start_time) / 60, 1)} minutes")
     else:
         print(f"Skip preparing {args.task} with lines: {args.num_samples} to {save_file} (file exists)")
+
+
     
 if __name__ == '__main__':
     main()
